@@ -74,7 +74,7 @@
             <div class="mb-4">
                 <label class="label-text">Password</label>
                 <!-- autocomplete="new-password" forces the browser to not autofill -->
-                <input type="password" id="p" class="form-control" placeholder="••••••••" required autocomplete="new-password" value="">
+                <input type="password" id="p" class="form-control" placeholder="Enter password" required autocomplete="new-password" value="">
             </div>
 
             <button type="submit" id="submitBtn" class="btn btn-enter w-100">

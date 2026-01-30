@@ -37,11 +37,11 @@
             <div class="row">
                 <div class="col-md-6">
                     <label class="label-text">Password</label>
-                    <input type="password" id="p" class="form-control" placeholder="••••••••" required autocomplete="new-password" value="">
+                    <input type="password" id="p" class="form-control" placeholder="Enter password" required autocomplete="new-password" value="">
                 </div>
                 <div class="col-md-6">
                     <label class="label-text">Confirm</label>
-                    <input type="password" id="cp" class="form-control" placeholder="••••••••" required autocomplete="new-password" value="">
+                    <input type="password" id="cp" class="form-control" placeholder="Confirm password" required autocomplete="new-password" value="">
                 </div>
             </div>
             <button type="submit" id="submitBtn" class="btn btn-signup w-100 mt-2">Sign Up</button>
