@@ -59,7 +59,7 @@
     <div class="login-card">
         <div class="text-center mb-4">
             <h2 class="login-title">Sign In</h2>
-            <p class="text-muted">Enter your credentials to access the portal.</p>
+            <p class="text-muted">Please enter your credentials.</p>
         </div>
 
         <div id="msg"></div>
@@ -68,13 +68,13 @@
             <div class="mb-3">
                 <label class="label-text">Username</label>
                 <!-- value="" and autocomplete="off" ensure it stays empty -->
-                <input type="text" id="u" class="form-control" placeholder="Username" required autocomplete="off" value="">
+                <input type="text" id="u" class="form-control"  required autocomplete="off" value="">
             </div>
             
             <div class="mb-4">
                 <label class="label-text">Password</label>
                 <!-- autocomplete="new-password" forces the browser to not autofill -->
-                <input type="password" id="p" class="form-control" placeholder="Enter password" required autocomplete="new-password" value="">
+                <input type="password" id="p" class="form-control"  required autocomplete="new-password" value="">
             </div>
 
             <button type="submit" id="submitBtn" class="btn btn-enter w-100">
