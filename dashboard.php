@@ -1,150 +1,121 @@
 <?php
 session_start();
-require 'dbconn.php';
+require_once 'dbconn.php';
 
-if(!isset($_SESSION['uid'])) { 
+if (!isset($_SESSION['uid'])) { 
     header("Location: login.php"); 
     exit(); 
 }
 
+// Fetch current user details safely
 $id = $_SESSION['uid'];
-$me = $conn->query("SELECT * FROM users WHERE id=$id")->fetch_assoc();
+$stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$me = $stmt->get_result()->fetch_assoc();
+
+if (!$me) { session_destroy(); header("Location: login.php"); exit(); }
+$userRole = strtolower($me['role']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Dashboard</title>
-    
+    <title>Dashboard | <?php echo ucfirst($userRole); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
-        :root { --primary: #4e73df; --success: #1cc88a; --bg: #f8f9fc; }
-        body { background-color: var(--bg); font-family: 'Inter', sans-serif; color: #5a5c69; }
-        .navbar { background: #fff; border-bottom: 1px solid #e3e6f0; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1); }
-        .card { border: none; border-radius: 15px; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05); margin-bottom: 1.5rem; overflow: hidden; }
-        .profile-bg { background: linear-gradient(135deg, var(--primary) 0%, #224abe 100%); height: 90px; }
-        .profile-avatar { width: 85px; height: 85px; border: 5px solid #fff; background: #f8f9fc; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.8rem; color: var(--primary); margin: -45px auto 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .card-header { background-color: #fff; border-bottom: 1px solid #e3e6f0; font-weight: 700; color: var(--primary); padding: 1.2rem; }
-        .table thead th { background-color: #f8f9fc; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05rem; color: #858796; padding: 1rem; border: none; }
-        .table tbody td { padding: 1rem; vertical-align: middle; font-size: 0.9rem; border-bottom: 1px solid #f1f1f1; }
-        .badge-log { background: #e3fcef; color: #008a52; border: 1px solid #008a52; font-size: 0.75rem; font-weight: 700; padding: 5px 12px; border-radius: 50px; }
+        :root { --primary: #4318FF; --bg: #f4f7fe; }
+        body { background-color: var(--bg); font-family: 'Inter', sans-serif; color: #2b3674; }
+        .navbar { background: #fff; border-bottom: 1px solid #e0e5f2; }
+        .card-custom { background: #fff; border: none; border-radius: 20px; box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.03); }
+        .welcome-hero { background: linear-gradient(135deg, #4318FF 0%, #b4a3ff 100%); border-radius: 20px; color: white; padding: 60px 40px; }
+        .table thead th { background-color: #f8fafc; color: #707eae; font-size: 0.75rem; text-transform: uppercase; border: none; padding: 15px; }
+        .table tbody td { padding: 15px; border-bottom: 1px solid #f1f4f9; vertical-align: middle; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand navbar-light sticky-top mb-4 py-3">
+    <nav class="navbar navbar-expand-lg sticky-top py-3">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="#"><i class="fas fa-shield-halved me-2"></i>ADMIN DASHBOARD</a>
-            <div class="ms-auto d-flex align-items-center">
-                <a href="logout.php" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-bold">Logout</a>
+            <a class="navbar-brand fw-bold text-primary" href="#"><i class="fa-solid fa-cube me-2"></i>APP.CORE</a>
+            <div class="ms-auto">
+                <a href="logout.php" class="btn btn-dark btn-sm rounded-pill px-4">Logout</a>
             </div>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="row">
-            
-            <!-- User Profile Sidebar -->
-            <div class="col-lg-4">
-                <div class="card">
-                    <div class="profile-bg"></div>
-                    <div class="card-body text-center">
-                        <div class="profile-avatar"><i class="fas fa-user-circle"></i></div>
-                        <h5 class="fw-bold mb-1 text-dark"><?php echo $me['username']; ?></h5>
-                        <p class="text-muted small mb-3"><?php echo $me['email']; ?></p>
-                        <span class="badge bg-primary rounded-pill px-3 py-2 mb-3"><?php echo strtoupper($me['role']); ?></span>
-                        <div class="mt-2 pt-3 border-top text-start">
-                            <div class="d-flex justify-content-between small mb-2">
-                                <span class="text-muted">Registered:</span>
-                                <span class="fw-bold"><?php echo date('M d, Y', strtotime($me['created_at'])); ?></span>
-                            </div>
-                        </div>
-                    </div>
+    <div class="container mt-5">
+        
+        <?php if ($userRole === 'admin'): ?>
+            <!-- ADMINISTRATOR VIEW: TABLE -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold m-0">System User Directory</h3>
+                <button onclick="refreshUserList()" id="refBtn" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                    <i class="fa-solid fa-sync me-1"></i> Refresh Data
+                </button>
+            </div>
+
+            <div class="card-custom overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email Address</th>
+                                <th>Role</th>
+                                <th>Registration Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <?php
+                            $users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
+                            while($row = $users->fetch_assoc()):
+                            ?>
+                            <tr>
+                                <td class="fw-bold"><?php echo $row['username']; ?></td>
+                                <td class="text-muted"><?php echo $row['email']; ?></td>
+                                <td><span class="badge bg-light text-primary border rounded-pill px-3"><?php echo strtoupper($row['role']); ?></span></td>
+                                <td class="small text-muted"><?php echo date('M d, Y', strtotime($row['created_at'])); ?></td>
+                            </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- Admin Panels -->
-            <div class="col-lg-8">
-                <h4 class="fw-bold text-dark mb-4">System Management</h4>
-
-                <?php if($_SESSION['role'] == 'admin'): ?>
-                    
-                    <!-- TABLE 1: REGISTERED USERS -->
-                    <div class="card">
-                        <div class="card-header"><i class="fas fa-users me-2"></i>User Directory</div>
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Username</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php
-                                    $all = $conn->query("SELECT * FROM users ORDER BY id DESC");
-                                    while($row = $all->fetch_assoc()) {
-                                        echo "<tr>
-                                            <td class='fw-bold text-dark'>{$row['username']}</td>
-                                            <td class='text-muted'>{$row['email']}</td>
-                                            <td><span class='badge bg-light text-dark border'>".strtoupper($row['role'])."</span></td>
-                                        </tr>";
-                                    }
-                                    ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- TABLE 2: LOGIN HISTORY (Tracks every time a user logs in) -->
-                    <div class="card mt-4">
-                        <div class="card-header text-success"><i class="fas fa-clock-rotate-left me-2"></i>Login Activity History</div>
-                        <div class="table-responsive">
-                            <table class="table table-striped mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>User</th>
-                                        <th>Status</th>
-                                        <th>Timestamp</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php
-                                    $logs = $conn->query("SELECT * FROM login_history ORDER BY login_time DESC LIMIT 10");
-                                    if($logs->num_rows > 0) {
-                                        while($log = $logs->fetch_assoc()) {
-                                            echo "<tr>
-                                                <td class='fw-bold text-dark'>{$log['uname']}</td>
-                                                <td><span class='badge-log'>SUCCESSFUL LOGIN</span></td>
-                                                <td class='text-muted small'><i class='far fa-calendar-alt me-1'></i> ".date('M d, Y | h:i A', strtotime($log['login_time']))."</td>
-                                            </tr>";
-                                        }
-                                    } else {
-                                        echo "<tr><td colspan='3' class='text-center py-4 text-muted'>No login history available yet.</td></tr>";
-                                    }
-                                    ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                <?php else: ?>
-                    <div class="card p-5 text-center">
-                        <i class="fas fa-shield-check fa-4x text-success opacity-25 mb-4"></i>
-                        <h2 class="fw-bold">Your Portal is Secure</h2>
-                        <p class="text-muted">Standard access granted. All activities are monitored for your security.</p>
-                    </div>
-                <?php endif; ?>
-
+        <?php else: ?>
+            <!-- NORMAL USER VIEW: WELCOME MESSAGE -->
+            <div class="welcome-hero shadow-lg text-center">
+                <i class="fa-solid fa-circle-check fa-4x mb-4 opacity-50"></i>
+                <h1 class="display-4 fw-bold">Welcome back, <?php echo $me['username']; ?>!</h1>
+                <p class="lead">You are logged in as a <strong>Standard User</strong>. You have access to your personal portal.</p>
+                <div class="mt-4">
+                    <button class="btn btn-light rounded-pill px-5 fw-bold shadow-sm">Enter Portal</button>
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
+
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function refreshUserList() {
+        let btn = document.getElementById('refBtn');
+        btn.disabled = true;
+        btn.innerHTML = 'Updating...';
+
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', 'actions/fetch_users.php', true);
+        xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById('userTableBody').innerHTML = this.responseText;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-sync me-1"></i> Refresh Data';
+            }
+        };
+        xhr.send();
+    }
+    </script>
 </body>
 </html>
