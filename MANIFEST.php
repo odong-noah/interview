@@ -27,9 +27,14 @@ Base folder:
 
 Files to note
 ---------------------
-- Dashboard.php    (Admin Dashboard)
-- dbconn.php       (Database Connection)
-
+- dataconnect.php: Core config, security functions, and HTTPS enforcement.
+- header.php / footer.php: Global UI components.
+- index.php: Login interface.
+- signup.php: Registration interface.
+- dashboard.php: Role-based view (Admin table vs User welcome).
+- actions/save_user.php: Logic for registration.
+- actions/verify_login.php: Logic for authentication.
+- actions/manage_user.php: Logic for Delete/Update.
 
 ===========================================
 DATABASE TABLES
